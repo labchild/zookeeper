@@ -1,9 +1,12 @@
 const express = require('express');
+const res = require('express/lib/response');
+const { get } = require('express/lib/response');
 const { animals } = require('./data/animals');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
 
+// create query method
 function filterByQuery(query, animalsArray) {
     // make a personality traits arr just in case
     let personalityTraitsArr = [];
@@ -46,14 +49,34 @@ function filterByQuery(query, animalsArray) {
     }
 
     return filteredResults;
+};
+
+// create id param method
+function findById(id, animalsArray) {
+    /* filter to find an animal with matching called id
+    filter reutrns an arr, so return index to get JUST animal obj */
+    const result = animalsArray.filter( animal => animal.id === id)[0];
+    return result;
 }
 
+// get animal(s) by queried attribute (prop)
 app.get('/api/animals', (req, res) => {
     let results = animals;
     if (req.query) {
         results = filterByQuery(req.query, results);
     }
     res.json(results);
+});
+
+// getting a single animal (param)
+app.get('/api/animals/:id', (req, res) => {
+    const result = findById(req.params.id, animals);
+
+    if (result) {
+        res.json(result);
+    } else {
+        res.sendStatus(404);
+    }
 });
 
 app.listen(PORT, () => {
