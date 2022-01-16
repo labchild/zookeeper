@@ -1,8 +1,15 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const { animals } = require('./data/animals');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
+
+// parse incoming str or arr data
+app.use(express.urlencoded({ extended: true }));
+// parse incoming JSON data
+app.use(express.json());
 
 function filterByQuery(query, animalsArray) {
   let personalityTraitsArray = [];
@@ -36,6 +43,37 @@ function findById(id, animalsArray) {
   return result;
 }
 
+function createNewAnimal(body, animalsArray) {
+  const animal = body;
+  animalsArray.push(animal);
+
+  // add new animal to our json file
+  fs.writeFileSync(
+    path.join(__dirname, './data/animals.json'),
+    JSON.stringify({ animals: animalsArray }, null, 2)
+  );
+  // return animal to the post route callback (or wherever else i guess)
+  return animal;
+}
+
+function validateAnimal(animal) {
+  if (!animal.name || typeof animal.name !== 'string') {
+    return false;
+  }
+  if (!animal.species || typeof animal.species !== 'string') {
+    return false;
+  }
+  if (!animal.diet || typeof animal.species !== 'string') {
+    return false;
+  }
+  if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)) {
+    return false;
+  }
+
+  return true;
+}
+
+// get route queries
 app.get('/api/animals', (req, res) => {
   let results = animals;
   if (req.query) {
@@ -44,12 +82,31 @@ app.get('/api/animals', (req, res) => {
   res.json(results);
 });
 
+// get route single animal
 app.get('/api/animals/:id', (req, res) => {
   const result = findById(req.params.id, animals);
   if (result) {
     res.json(result);
   } else {
     res.send(404);
+  }
+});
+
+// post route
+app.post('/api/animals', (req, res) => {
+  // incoming content will be in req.body
+  // set id based on the next available index in the animals arr
+  // toString() because we JSON only takes strings
+  req.body.id = animals.length.toString();
+
+  // validate req.body, if incorrect send 400 error
+  if (!validateAnimal(req.body)) {
+    res.status(400).send('The animal is not properly formatted.');
+  } else {
+    // add animal to json file and animals array in this function
+    const animal = createNewAnimal(req.body, animals);
+
+    res.json(animal);
   }
 });
 
