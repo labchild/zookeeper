@@ -127,6 +127,16 @@
         "loving"
       ],
       "id": "12"
+    },
+    {
+      "name": "sugar",
+      "species": "doge",
+      "diet": "omnivore",
+      "personalityTraits": [
+        "zany",
+        "loving"
+      ],
+      "id": "13"
     }
   ]
 }
